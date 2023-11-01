@@ -1,0 +1,28 @@
+name: Docker Build
+
+on:
+  push:
+    branches:
+      - production
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  REPO_NAME: ${{ secrets.REPO_NAME }}
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository 👀
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx 
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker Image 🐋
+        run: |
+          docker buildx create --use
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker buildx build -t $DOCKER_USERNAME/$REPO_NAME:latest -f server/Dockerfile . --push
