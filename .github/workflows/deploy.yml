@@ -1,0 +1,46 @@
+name: Deploy to EC2 ☁️
+
+on:
+  workflow_run:
+    workflows: ["Docker Build"]
+    types:
+      - completed
+
+env:
+  EC2_IP_ADDRESS: ${{ secrets.EC2_IP_ADDRESS }}
+  EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+  EC2_PEM_KEY: ${{ secrets.EC2_PEM_KEY }}
+  REPO_NAME: ${{ secrets.REPO_NAME }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  DOCKER_COMPOSE: ${{ secrets.DOCKER_COMPOSE }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: SSH KEY 🔑
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_PEM_KEY" > ~/.ssh/id_rsa.pem
+          chmod 600 ~/.ssh/id_rsa.pem
+
+      - name: Create docker-compose
+        run: |
+          echo "$DOCKER_COMPOSE" > ~/$REPO_NAME-compose.yml
+
+      - name: Send Docker Compose 🐋
+        run: |
+          scp -i ~/.ssh/id_rsa.pem -o StrictHostKeyChecking=no -r ~/$REPO_NAME-compose.yml $EC2_USERNAME@$EC2_IP_ADDRESS:~/$REPO_NAME-compose
+
+      - name: Docker pull -> up 🐳
+        run: |
+          ssh -i ~/.ssh/id_rsa.pem -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_IP_ADDRESS "
+            sudo docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD &&
+            sudo docker pull $DOCKER_USERNAME/$REPO_NAME:latest &&
+            sudo docker-compose -p $REPO_NAME -f ~/$REPO_NAME-compose up -d
+          "
