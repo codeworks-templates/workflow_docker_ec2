@@ -41,3 +41,9 @@ jobs:
             sudo docker pull $DOCKER_USERNAME/$REPO_NAME:latest &&
             sudo docker-compose -p $REPO_NAME -f ~/$REPO_NAME-compose up -d
           "
+      
+      - name: Docker prune 🌳
+        run: |
+          ssh -i ~/.ssh/id_rsa.pem -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_IP_ADDRESS "
+            sudo docker image prune -a -f
+          "
