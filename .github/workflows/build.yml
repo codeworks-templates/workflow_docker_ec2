@@ -3,11 +3,12 @@ name: Docker Build
 on:
   push:
     branches:
-      - production
+      - main
 
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'deploy')
 
     steps:
       - name: Checkout Repository 👀
@@ -28,7 +29,6 @@ jobs:
       - name: Build and Push Docker Image 🐋
         uses: docker/build-push-action@v5
         with:
-          platforms: linux/arm64, linux/amd64
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.REPO_NAME }}:latest
           file: server/Dockerfile
           context: .
