@@ -39,4 +39,4 @@ services:
 ```
 
 
-This workflow is triggered when changes are made to the `production` branch
+This workflow is triggered when your commit message includes the word `deploy`
